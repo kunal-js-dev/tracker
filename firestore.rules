@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if the user is authenticated and owns the data
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // User profile document: users/{userId}
+    match /users/{userId} {
+      allow read, create, update, delete: if isOwner(userId);
+
+      // User's private expenses subcollection: users/{userId}/expenses/{expenseId}
+      match /expenses/{expenseId} {
+        allow read, create, update, delete: if isOwner(userId);
+      }
+
+      // User's private settings/budget subcollection: users/{userId}/settings/{settingId}
+      match /settings/{settingId} {
+        allow read, create, update, delete: if isOwner(userId);
+      }
+    }
+
+    // Default deny all other reads and writes
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
